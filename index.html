@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MockHive — Aptitude Interview Test</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#ecf0f4;
+    --card:#ebe6ff;
+    --accent:#2727ef;
+    --accent-2:#101211;
+    --muted:#0c0d0d;
+    --success:#16a085;
+    --danger:#e74c3c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:'Inter',system-ui,Segoe UI,Roboto,-apple-system,Arial;
+    background: linear-gradient(180deg,#fafafc 0%, #f4f7fb 100%);
+    color:#0f1724;
+  }
+
+  /* NAV */
+  header{
+    position:fixed; left:0; right:0; top:0;
+    background:rgba(15,123,255,0.06);
+    backdrop-filter: blur(6px);
+    border-bottom:1px solid rgba(15,123,255,0.06);
+    z-index:50;
+  }
+  .nav {
+    max-width:2800px; margin:0 auto; display:flex; align-items:center;
+    gap:20px; padding:12px 18px;
+  }
+  .brand{font-weight:600; color:var(--accent); font-size:28px;}
+  .nav-links{margin-left:auto; display:flex; gap:14px; align-items:center;}
+  .nav-links a{color:var(--muted); text-decoration:none; padding:6px 10px; border-radius:8px; font-weight:600;}
+  .nav-links a:hover{background:rgba(15,123,255,0.08); color:var(--accent);}
+
+  /* Layout */
+  .wrap{max-width:2000px; margin:110px auto 40px; padding:0 18px;}
+  .grid{display:grid; grid-template-columns: 1fr 420px; gap:24px; align-items:start;}
+  @media(max-width:940px){ .grid{grid-template-columns:1fr; } .right-col{order:2} }
+
+  /* Left card (test area) */
+  .card{
+    background:var(--card); border-radius:12px; padding:22px; box-shadow:0 8px 30px rgba(12,20,30,0.06);
+    transition:transform .75s, box-shadow .95s;
+  }
+  .card:has(.start-btn:hover){ transform:translateY(-4px);}
+
+  .hero{
+    display:flex; gap:14px; align-items:center;
+  }
+  .hero .title{font-size:40px; font-weight:900; color:#0b1220;}
+  .hero .sub{color:var(--muted); font-size:24px;}
+
+  .desc{margin-top:16px; color:var(--muted); line-height:1.5; font-size:18px;}
+
+  /* Start area */
+  .start-area{display:flex; gap:12px; align-items:center; margin-top:20px; flex-wrap:wrap;}
+  .start-btn{
+    background: linear-gradient(90deg,var(--accent), #0d52b4);
+    color:white; border:none; padding:12px 18px; border-radius:10px; cursor:pointer;
+    font-weight:700; font-size:15px; box-shadow:0 8px 24px rgba(15,123,255,0.12);
+    transition:transform .15s;
+  }
+  .start-btn:hover{ transform:translateY(-4px); }
+  .meta{color:var(--muted); font-size:13px;}
+
+  /* quiz */
+  #quizWrap{display:none; margin-top:18px;}
+  #timerRow{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;}
+  .timer{font-weight:700; color:var(--danger); background:rgba(231,76,60,0.06); padding:8px 12px; border-radius:8px;}
+  .progressOuter{flex:1; margin-left:12px; height:10px; border-radius:999px; background:#eef2ff; overflow:hidden;}
+  .progressInner{height:100%; width:0%; background:linear-gradient(90deg,var(--accent-2), #10a37f); transition:width .4s ease;}
+
+  .questionTxt{font-weight:700; font-size:18px; margin:16px 0; color:#0b1220; min-height:56px;}
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .opt{
+    background:#f6f9ff; border:1px solid rgba(15,123,255,0.06); padding:12px 14px; border-radius:10px;
+    text-align:left; cursor:pointer; transition:transform .12s, background .12s, box-shadow .12s;
+    display:flex; align-items:center; gap:10px;
+  }
+  .opt:hover{ transform:translateY(-4px); box-shadow:0 10px 24px rgba(12,20,30,0.06); }
+  .opt.selected{ background:linear-gradient(90deg, rgba(22,160,133,0.12), rgba(16,123,255,0.08)); border-color:rgba(22,160,133,0.18); }
+  .opt .label{width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent); background:rgba(15,123,255,0.06);}
+  .navBtns{display:flex; justify-content:space-between; gap:12px; margin-top:16px;}
+  .btn{padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700;}
+  .btn.secondary{background:#eef2ff; color:var(--accent); border:1px solid rgba(15,123,255,0.08);}
+  .btn.primary{background:linear-gradient(90deg,var(--accent), #04152d); color:white;}
+
+  /* Right column (sidebar) */
+  .right-col{position:sticky; top:100px;}
+  .summary{display:flex; gap:14px; align-items:center;}
+  .bubble{width:64px; height:64px; border-radius:12px; background:linear-gradient(90deg,#16a085,#22c2a9); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px;}
+  .stats{flex:1;}
+  .statItem{display:flex; justify-content:space-between; margin-top:8px; color:var(--muted); font-size:14px;}
+
+  /* result */
+  #resultWrap{display:none; margin-top:18px;}
+  .analysis p{margin:8px 0; font-size:14px; color:var(--muted); line-height:1.5;}
+
+  /* footer */
+  footer{max-width:1000px;margin:28px auto 60px; padding:18px; color:var(--muted); font-size:18px; text-align:center;}
+  .small{font-size:12px;color:#060607;}
+
+  /* subtle animations on load */
+  .fadeIn{opacity:0; transform:translateY(6px); animation:fadeInUp .6s forwards;}
+  .fadeDelay{animation-delay:.08s}
+  @keyframes fadeInUp{to{opacity:1; transform:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="brand">MockHive Aptitude Test </div>
+    <div class="nav-links">
+      <a href="#top" class="nav-link">Home</a>
+      <a href="#desc" class="nav-link">About</a>
+      <a href="#test" class="nav-link">Aptitude Test</a>
+      <a href="#result" class="nav-link">Result</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="grid">
+    <!-- LEFT -->
+    <div class="card fadeIn" style="--i:0">
+      <div class="hero">
+        <div>
+          <div class="title">Aptitude Test</div>
+          <br>
+          <div class="sub"> High-quality interview-Basis aptitude questions — time-bound & analysis-ready.</div>
+        </div>
+      </div>
+
+      <div id="desc" class="desc fadeIn fadeDelay" style="margin-top:14px">
+        <strong>What this test does:</strong>
+        <p style="margin:8px 0 0;color:var(--muted);">
+          This Aptitude Interview Test focuses on common and high-impact numerical ability, logical reasoning,
+          data interpretation and basic quantitative problems frequently asked in campus placements, government
+          recruitments and company entry-level interviews. The test is time-boxed to simulate real interview conditions,
+          provides instant scoring and a question-by-question analysis to help you improve.
+        </p>
+      </div>
+
+      <div class="start-area fadeIn" style="margin-top:18px">
+        <button id="startBtn" class="start-btn">Start Test — 20 Q • 20 min</button>
+        <div class="meta">Tip: Use <strong>Next</strong> & <strong>Previous</strong>, your answers save automatically.</div>
+      </div>
+
+      <!-- QUIZ -->
+      <div id="quizWrap">
+        <div id="quizHeader" style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-weight:700;color:var(--muted);">Test: Aptitude • Question <span id="qIndex">1</span>/<span id="qTotal">20</span></div>
+          <div id="timerRow" style="display:flex; align-items:center; gap:12px;">
+            <div class="timer" id="timer">20:00</div>
+            <div class="progressOuter" style="width:200px"><div class="progressInner" id="progressBar"></div></div>
+          </div>
+        </div>
+
+        <div id="quizArea" style="margin-top:14px">
+          <div class="questionTxt" id="questionText">Question text will appear here</div>
+          <div class="options" id="optionsList"></div>
+
+          <div class="navBtns">
+            <button class="btn secondary" id="prevBtn">← Previous</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn secondary" id="skipBtn">Skip</button>
+              <button class="btn primary" id="nextBtn">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- result area -->
+      <div id="resultWrap" style="margin-top:18px;">
+        <div id="resultHeader" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-weight:700; font-size:18px">Your Result</div>
+          <button id="restartBtn" class="btn secondary">Restart Test</button>
+        </div>
+
+        <div id="scoreBox" style="margin-top:12px;">
+          <div style="font-size:20px; font-weight:800;" id="scoreText">Score: 0 / 20</div>
+          <div style="color:var(--muted); margin-top:6px;" id="detailText">Detailed analysis below</div>
+        </div>
+
+        <div class="analysis" id="analysisArea" style="margin-top:12px"></div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="right-col">
+      <div class="card fadeIn" style="--i:1">
+        <div class="summary">
+          <div class="bubble" id="bubbleCnt">20</div>
+          <div class="stats">
+            <div style="font-weight:700">Aptitude Test</div>
+            <div style="color:var(--muted); font-size:13px">Interview-style quantitative & logical problems</div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="statItem"><div>Time</div><div id="sideTime">20:00</div></div>
+          <div class="statItem"><div>Total Qs</div><div id="sideTotal">20</div></div>
+          <div class="statItem"><div>Answered</div><div id="sideAnswered">0</div></div>
+          <div class="statItem"><div>Remaining</div><div id="sideRemain">20</div></div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button id="goDashboard" class="btn secondary" style="flex:1">Back</button>
+          <button id="finishNow" class="btn primary" style="flex:1">Finish</button>
+        </div>
+      </div>
+
+      <div class="card fadeIn" style="margin-top:16px">
+        <div style="font-weight:700">How to use</div>
+        <ul style="color:var(--muted); margin-top:8px; padding-left:18px;">
+          <li>Click <strong>Start Aptitude Test</strong> to begin.</li>
+          <li>Each question has single correct option — choose best answer.</li>
+          <li>Use Next / Previous to navigate, Skip to leave unanswered.</li>
+          <li>Timer runs continuously; test auto-submits when time ends.</li>
+          <li>After finish, review the detailed answer-by-answer analysis.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- chart area (full width) -->
+  <section class="card" id="result" style="margin-top:22px; display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-weight:700">Performance Chart</div>
+      <div style="color:var(--muted)">Correct / Wrong / Unanswered</div>
+    </div>
+    <canvas id="perfChart" style="margin-top:12px;"></canvas>
+  </section>
+
+</main>
+
+<footer>
+  © <span id="year"></span> MockHive — All rights reserved. • Built for practice & interview prep.
+  <div class="small" style="margin-top:8px">Use for practice only. Questions are for learning & assessment purposes.</div>
+</footer>
+
+<script>
+/* -------------------------
+   Questions (20 Aptitude)
+   interview-relevant, single best option
+   ------------------------- */
+const questions = [
+  {q:"1) If 5x - 3 = 2x + 12, then x = ?", opts:["3","5","-5","-3"], ans:"3"},
+  {q:"2) A train 120 m long passes a pole in 8 seconds. What is its speed (km/h)?", opts:["54","45","60","72"], ans:"54"},
+  {q:"3) If the ratio of A:B = 3:4 and B:C = 5:6, then A:C = ?", opts:["15:24","3:8","15:24 (reduce)","9:8"], ans:"9:8"},
+  {q:"4) Average of five numbers is 20. If one number is removed, average becomes 18. The removed number is ?", opts:["30","25","26","28"], ans:"30"},
+  {q:"5) A shopkeeper marks an article 20% above cost price and gives 10% discount on marked price. Gain percent is ?", opts:["8%","10%","6%","12%"], ans:"8%"},
+  {q:"6) If a:b = 2:3 and b:c = 4:5, what is a:c ?", opts:["8:15","2:5","8:5","6:15"], ans:"8:15"},
+  {q:"7) Simplify: 7 + 3 × (10 ÷ 2) - 4 =", opts:["18","23","13","21"], ans:"23"},
+  {q:"8) A can do a work in 12 days, B in 16 days. A+B together will do it in ?", opts:["7 days","6.86 days","20 days","8 days"], ans:"6.86 days"},
+  {q:"9) Compound interest on a sum for 2 years at 10% per annum = ₹1210. The principal is ?", opts:["10000","10000?","10000?","10000"], ans:"10000"},
+  {q:"10) If x^2 - 6x + 9 = 0, then x = ?", opts:["3","-3","0","6"], ans:"3"},
+  {q:"11) Two consecutive integers have product 56. They are ?", opts:["7 and 8","-7 and -8","6 and 7","-6 and -7"], ans:"7 and 8"},
+  {q:"12) If 3/5 of a number is 54, the number is ?", opts:["90","80","100","120"], ans:"90"},
+  {q:"13) A man covers first half of a journey at 30 km/h and second half at 60 km/h. Average speed is ?", opts:["40 km/h","45 km/h","42 km/h","48 km/h"], ans:"40 km/h"},
+  {q:"14) In a class, 60% passed in maths and 70% in English. If 20% failed in both, minimum percent passed in both = ?", opts:["30%","40%","50%","60%"], ans:"30%"},
+  {q:"15) A bag contains 5 red and 3 blue balls. Probability of drawing a red ball is ?", opts:["5/8","3/8","1/2","5/3"], ans:"5/8"},
+  {q:"16) If 8 men take 10 days to build a wall, how many men needed to finish in 5 days?", opts:["16","14","12","10"], ans:"16"},
+  {q:"17) Find next number: 2, 5, 11, 23, 47, ?", opts:["95","94","96","89"], ans:"95"},
+  {q:"18) If 20% of A = 30% of B and A + B = 500, then A = ?", opts:["200","300","250","100"], ans:"200"},
+  {q:"19) A product's price decreases by 10% and then increases by 10%. Net change is ?", opts:["-1%","0%","+1%","-2%"], ans:"-1%"},
+  {q:"20) A can do 60% of a job in 6 days. How long will he take to do whole job?", opts:["10 days","12 days","15 days","9 days"], ans:"10 days"}
+];
+
+/* UI elements */
+const startBtn = document.getElementById('startBtn');
+const quizWrap = document.getElementById('quizWrap');
+const qIndex = document.getElementById('qIndex');
+const qTotal = document.getElementById('qTotal');
+const questionText = document.getElementById('questionText');
+const optionsList = document.getElementById('optionsList');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const skipBtn = document.getElementById('skipBtn');
+const timerEl = document.getElementById('timer');
+const progressBar = document.getElementById('progressBar');
+const sideAnswered = document.getElementById('sideAnswered');
+const sideRemain = document.getElementById('sideRemain');
+const sideTime = document.getElementById('sideTime');
+const bubbleCnt = document.getElementById('bubbleCnt');
+const finishNow = document.getElementById('finishNow');
+const goDashboard = document.getElementById('goDashboard');
+const qTotalEl = document.getElementById('qTotal');
+const resultWrap = document.getElementById('resultWrap');
+const resultSection = document.getElementById('result');
+const perfChart = document.getElementById('perfChart');
+const scoreText = document.getElementById('scoreText');
+const analysisArea = document.getElementById('analysisArea');
+const restartBtn = document.getElementById('restartBtn');
+
+let current = 0;
+let answers = Array(questions.length).fill(null);
+let durationSec = 20 * 60; // 20 minutes
+let remaining = durationSec;
+let timerId = null;
+
+/* init text */
+qTotal.textContent = questions.length;
+qTotalEl.textContent = questions.length;
+bubbleCnt.textContent = questions.length;
+sideTotal = questions.length;
+sideRemain.textContent = questions.length;
+
+/* Helpers */
+function formatTime(s){
+  const m = Math.floor(s/60);
+  const sec = s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function updateSideStats(){
+  const answered = answers.filter(a=>a!==null).length;
+  sideAnswered.textContent = answered;
+  sideRemain.textContent = questions.length - answered;
+  sideTime.textContent = formatTime(remaining);
+}
+
+/* Start test */
+startBtn.addEventListener('click', ()=>{
+  startBtn.disabled = true;
+  quizWrap.style.display = 'block';
+  document.getElementById('desc').scrollIntoView({behavior:'smooth'});
+  loadQuestion(0);
+  startTimer();
+});
+
+/* Load question */
+function loadQuestion(idx){
+  current = idx;
+  const item = questions[idx];
+  qIndex.textContent = idx+1;
+  questionText.textContent = item.q;
+  optionsList.innerHTML = '';
+  item.opts.forEach((opt, i)=>{
+    const div = document.createElement('div');
+    div.className = 'opt';
+    if (answers[idx] === opt) div.classList.add('selected');
+    div.innerHTML = `<div class="label">${String.fromCharCode(65+i)}</div><div style="flex:1">${opt}</div>`;
+    div.addEventListener('click', ()=>{
+      answers[idx] = opt;
+      Array.from(optionsList.children).forEach(o=>o.classList.remove('selected'));
+      div.classList.add('selected');
+      updateProgress();
+      updateSideStats();
+    });
+    optionsList.appendChild(div);
+  });
+  // progress bar width
+  const percent = ((idx)/questions.length) * 100;
+  progressBar.style.width = percent + '%';
+  // show/hide prev
+  prevBtn.disabled = (idx === 0);
+}
+
+/* Navigation */
+nextBtn.addEventListener('click', ()=>{
+  if (current < questions.length-1){
+    loadQuestion(current+1);
+  } else {
+    finishTest();
+  }
+});
+prevBtn.addEventListener('click', ()=>{
+  if (current > 0) loadQuestion(current-1);
+});
+skipBtn.addEventListener('click', ()=>{
+  if (current < questions.length-1) loadQuestion(current+1);
+  else finishTest();
+});
+
+/* finish / restart */
+finishNow.addEventListener('click', finishTest);
+restartBtn.addEventListener('click', ()=>{
+  // reset
+  answers = Array(questions.length).fill(null);
+  remaining = durationSec;
+  updateSideStats();
+  resultWrap.style.display = 'none';
+  resultSection.style.display = 'none';
+  perfChart.parentElement.style.display = 'none';
+  startBtn.disabled = false;
+  document.getElementById('desc').scrollIntoView({behavior:'smooth'});
+});
+goDashboard.addEventListener('click', ()=> {
+  // scroll top, stop test if running
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+/* timer */
+function startTimer(){
+  clearInterval(timerId);
+  remaining = durationSec;
+  updateSideStats();
+  timerId = setInterval(()=>{
+    remaining--;
+    timerEl.textContent = formatTime(remaining);
+    progressBar.style.width = ((current+1)/questions.length*100)+'%';
+    sideTime.textContent = formatTime(remaining);
+    if (remaining <= 0){
+      clearInterval(timerId);
+      finishTest();
+    }
+  }, 1000);
+}
+
+/* update progress when answer clicked */
+function updateProgress(){
+  const answered = answers.filter(a=>a!==null).length;
+  progressBar.style.width = ((current+1)/questions.length*100)+'%';
+  sideAnswered.textContent = answered;
+  sideRemain.textContent = questions.length - answered;
+}
+
+/* finish and show result */
+function finishTest(){
+  clearInterval(timerId);
+  quizWrap.style.display = 'none';
+  resultWrap.style.display = 'block';
+  resultSection.style.display = 'block';
+  // compute
+  let correct = 0;
+  for (let i=0;i<questions.length;i++){
+    if (answers[i] === questions[i].ans) correct++;
+  }
+  const wrong = answers.filter((a,i)=> a!==null && a!==questions[i].ans).length;
+  const notAns = questions.length - (correct + wrong);
+
+  scoreText.textContent = `Score: ${correct} / ${questions.length}`;
+  analysisArea.innerHTML = '';
+  questions.forEach((q,i)=>{
+    const your = answers[i] ? answers[i] : '<em style="color:#9aa4b2">Not Answered</em>';
+    const ok = (answers[i]===q.ans) ? '✅' : '❌';
+    const p = document.createElement('div');
+    p.style.marginBottom = '8px';
+    p.innerHTML = `<strong>Q${i+1}.</strong> ${q.q}<br>
+                   <span style="color:${(answers[i]===q.ans)?'#16a085':'#e74c3c'}">${ok} Correct: ${q.ans}</span>
+                   <span style="margin-left:12px; color:#374151">Your: ${your}</span>`;
+    analysisArea.appendChild(p);
+  });
+
+  // show chart
+  document.getElementById('result').style.display = 'block';
+  perfChart.parentElement.style.display = 'block';
+  const ctx = perfChart.getContext('2d');
+  // destroy prev chart if exists
+  if (window._perf) window._perf.destroy();
+  window._perf = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct','Wrong','Not Answered'],
+      datasets: [{ data: [correct, wrong, notAns], backgroundColor:['#16a085','#e74c3c','#9aa4b2'] }]
+    },
+    options: { plugins:{legend:{position:'bottom'}} }
+  });
+
+  // show back button + update year footer
+  document.getElementById('backDashboard').style.display = 'inline-block';
+  document.getElementById('year').textContent = new Date().getFullYear();
+}
+
+/* initial UI */
+qTotal.textContent = questions.length;
+qTotalEl.textContent = questions.length;
+document.getElementById('year').textContent = new Date().getFullYear();
+updateSideStats();
+
+/* keyboard shortcuts (optional) */
+document.addEventListener('keydown', e=>{
+  if (quizWrap.style.display === 'block') {
+    if (e.key === 'ArrowRight') nextBtn.click();
+    if (e.key === 'ArrowLeft') prevBtn.click();
+    if (e.key === 's' || e.key === 'S') skipBtn.click();
+  }
+});
+</script>
+</body>
+</html>
